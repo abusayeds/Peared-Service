@@ -16,17 +16,17 @@ The Travel Tips Project is a social media-like platform where users can share an
   - Create, read, update, and delete (CRUD) posts.
   - Comment on posts.
   - Like or unlike posts.
+   - ![Post Management](https://i.ibb.co/C2ZCFdY/post.png)
 - **User Profiles**:
   - View and update user profiles.
+ - ![Profile](https://i.ibb.co/7kfKxXF/profile.png)
 - **Social Interactions**:
-
   - Follow and unfollow other users.
 
 - **Admin Dashboard**:
-
-  - View user details.
+   - View user details.
   - Manage payments.
-
+ - ![admin](https://i.ibb.co/mHgznNr/admin.png)
 - **Payment Integration**:
   - Users can make payments using **AmarPay**.
 
