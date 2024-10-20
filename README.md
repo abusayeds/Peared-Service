@@ -4,7 +4,7 @@
 
 The Travel Tips Project is a social media-like platform where users can share and discover travel tips. Users can log in, manage their profiles, and perform CRUD operations on posts. This platform also includes an admin dashboard for managing user details and payments.
 
-## Project video overview : https://www.loom.com/share/1d6c2a67209f4fc6bb74a75c6a7eca4c
+ https://www.loom.com/share/1d6c2a67209f4fc6bb74a75c6a7eca4c
 
 ## Features
 
