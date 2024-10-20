@@ -16,7 +16,7 @@ The Travel Tips Project is a social media-like platform where users can share an
   - Create, read, update, and delete (CRUD) posts.
   - Comment on posts.
   - Like or unlike posts.
-   - ![Post Management](https://i.ibb.co/C2ZCFdY/post.png)
+  - ![post-hear](https://i.ibb.co/Pmr7JYQ/post.png)
 - **User Profiles**:
   - View and update user profiles.
  - ![Profile](https://i.ibb.co/7kfKxXF/profile.png)
