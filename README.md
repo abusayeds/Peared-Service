@@ -11,7 +11,7 @@ The Travel Tips Project is a social media-like platform where users can share an
 - **User Authentication**:
   - Login, logout, and registration.
   - Password management (change, forget, reset).
-  - ![Main Page](https://github.com/MdNadeemSarwar/Face-Recognition-Attendance-System/assets/107212111/19a7776c-c1a6-4934-a7ae-cc9d8a3316c2)
+  - ![login& logout(https://i.ibb.co/nkMhRCd/login-and-log-Out.png)
 - **Post Management**:
   - Create, read, update, and delete (CRUD) posts.
   - Comment on posts.
