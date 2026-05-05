@@ -1,49 +1,41 @@
-/* eslint-disable prettier/prettier */
+// src/middleware.ts
 import type { NextRequest } from "next/server";
-
 import { NextResponse } from "next/server";
 
-import { getCurrentUser } from "./components/services/authServices";
+// 1. Base protected paths
+const protectedPaths = [
+  "/profile", // Protected profile routes
+  "/add-project",
+  "/feedback",
+  "/report",
+  "/paymentSuccess",
+  "/dashboard",
+];
 
+// 2. Public paths that might exist under protected parents
+const publicExceptions = [
+  "/profile/public-info", // Example of public route under /profile
+];
 
-
-const AuthRoutes = ["/login", "/register"];
-
-const roleBaseRoute = {
-  USER: [/^\/profile/],
-  ADMIN: [/^\/admin/],
-};
-
-type Roles = keyof typeof roleBaseRoute;
-
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const user = await getCurrentUser()
 
-  if (!user) {
-    if (AuthRoutes.includes(pathname)) {
-      return NextResponse.next();
-    }
-
-    return NextResponse.redirect(
-      new URL(`/login?redirect=${pathname}`, request.url)
-    );
+  // Skip public exceptions
+  if (publicExceptions.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
   }
 
-  if (
-    user?.decodedToken?.user?.role&&
-    roleBaseRoute[user?.decodedToken?.user?.role as Roles]
-  ) {
-    const routes = roleBaseRoute[user?.decodedToken?.user?.role as Roles];
+  // Check if current path is protected
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
-    if (routes.some((route) => pathname.match(route))) {
-      return NextResponse.next();
-    }
+  const token = request.cookies.get("authToken")?.value;
+
+  if (isProtected && !token) {
+    // Store attempted URL for redirect after login
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.redirect(new URL("/", request.url));
+  return NextResponse.next();
 }
-
-export const config = {
-  matcher: ["/profile", "/profile/:page*", "/admin" , "/admin/:page*" ,"/login", "/register", "/newsFeed"],
-};
