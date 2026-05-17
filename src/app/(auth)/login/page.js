@@ -1,10 +1,11 @@
 "use client";
 
-import { Button, Checkbox, Form, Input } from "antd";
+import { Button, Checkbox, Form, Input, Select } from "antd";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import { useDispatch } from "react-redux";
+import Swal from "sweetalert2";
 import { ErrorSwal, SuccessSwal } from "../../../components/utils/allSwalFire";
 import { useLoginMutation } from "../../../redux/features/authApi";
 import { setCredentials } from "../../../redux/slices/authSlice";
@@ -54,6 +55,24 @@ const Login = () => {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleDemoLogin = (email) => {
+    Swal.fire({
+      title: "Testing Credentials",
+      text: "These credentials are provided just for testing. Do not change anything.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DEAD35",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "I Agree",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const password = "1qazxsw2";
+        form.setFieldsValue({ email, password });
+        onFinish({ email, password });
+      }
+    });
   };
 
   return (
@@ -140,6 +159,36 @@ const Login = () => {
               Login
             </Button>
           </Form.Item>
+
+          {/* Demo Login Section */}
+          <div className="flex flex-col items-center mb-4">
+            <p className="text-gray-500 mb-2 font-semibold">Or login with a demo account:</p>
+            <Select
+              placeholder="Select a Demo Account"
+              style={{ width: "100%" }}
+              onChange={handleDemoLogin}
+              size="large"
+              value={null}
+              options={[
+                {
+                  label: "User Roles",
+                  options: [
+                    { label: "user1@gmail.com", value: "user1@gmail.com" },
+                    { label: "user2@gmail.com", value: "user2@gmail.com" },
+                    { label: "user3@gmail.com", value: "user3@gmail.com" },
+                  ],
+                },
+                {
+                  label: "Provider Roles",
+                  options: [
+                    { label: "provider1@gmail.com", value: "provider1@gmail.com" },
+                    { label: "provider2@gmail.com", value: "provider2@gmail.com" },
+                    { label: "provider3@gmail.com", value: "provider3@gmail.com" },
+                  ],
+                },
+              ]}
+            />
+          </div>
 
           {/* Navigation Link to Signup Page */}
           <p className="text-center pt-4">

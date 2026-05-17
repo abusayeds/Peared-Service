@@ -75,9 +75,6 @@ export default function Projects() {
     searchTerm: searchText,
   });
 
-  console.log(data?.data?.project);
-
-  // console.log(data?.data);
   const [bidProject] = useCreateBidProjectMutation();
   // console.log(data.data.project);
 
