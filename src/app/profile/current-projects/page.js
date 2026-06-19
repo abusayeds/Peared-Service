@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import { useCurrentProjectsQuery } from "../../../redux/features/projects/projectApi";
 
 export default function CurrentProjects() {
@@ -47,7 +48,7 @@ export default function CurrentProjects() {
               >
                 <div className="relative w-full h-48 mb-4 rounded-t-lg overflow-hidden">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${project?.projectId?.image}`}
+                    src={getImageUrl(project?.projectId?.image)}
                     alt={project.title}
                     fill
                     className="rounded-t-lg object-cover"

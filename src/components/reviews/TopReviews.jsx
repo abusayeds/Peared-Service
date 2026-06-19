@@ -3,6 +3,7 @@
 import { Card, Rate } from "antd";
 import dayjs from "dayjs";
 import Image from "next/image";
+import { getImageUrl } from "../../lib/getImageUrl";
 import { useTopReviewsQuery } from "../../redux/features/review/reviewApi";
 
 export default function TopReviews({ providerID }) {
@@ -27,7 +28,7 @@ export default function TopReviews({ providerID }) {
                 {/* Avatar Container */}
                 <div className="relative w-12 h-12">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${review?.image}`}
+                    src={getImageUrl(review?.image)}
                     alt="User"
                     fill
                     className="rounded-full object-cover"

@@ -7,12 +7,12 @@ import { FaPlus, FaTimes } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
 import default_img from "../../../assets/user_img_default.png";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import { useUpdateUserDataMutation } from "../../../redux/features/userApi";
 import ChangePasswordModal from "../../modals/ChangePasswordModal";
 import { ErrorSwal, SuccessSwal } from "../../utils/allSwalFire";
 
 export default function UserProfile() {
-  const baseImageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
   const { user } = useSelector((state) => state.auth);
 
   const [file, setFile] = useState(null);
@@ -33,12 +33,12 @@ export default function UserProfile() {
     } else if (user?.image) {
       // Use the image from the API response, considering the base URL
 
-      setPreviewImage(baseImageUrl + user?.image);
+      setPreviewImage(getImageUrl(user?.image, default_img.src));
     } else {
       // Default image if no profile image exists
       setPreviewImage(default_img.src);
     }
-  }, [file, user, baseImageUrl]);
+  }, [file, user]);
 
   const handleBeforeUpload = (file) => {
     const isImage = file.type.startsWith("image/");
@@ -96,7 +96,7 @@ export default function UserProfile() {
     });
     // Ensure preview image is set when opening the modal
     if (user?.image && !file) {
-      setPreviewImage(baseImageUrl + user?.image);
+      setPreviewImage(getImageUrl(user?.image, default_img.src));
     }
   };
 

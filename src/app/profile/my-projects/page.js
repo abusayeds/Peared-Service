@@ -9,6 +9,7 @@ import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdOutlineVerified } from "react-icons/md";
 import { SuccessSwal } from "../../../components/utils/allSwalFire";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import {
   useBoostProjectMutation,
   useMyProjectsQuery,
@@ -87,7 +88,7 @@ export default function MyProjects() {
                 {/* <div className="w-full h-full rounded-lg absolute bg-gray-500/50 top-0 left-0"></div> */}
                 <div className="relative w-full h-48 mb-4 rounded-t-lg overflow-hidden">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${project?.image}`}
+                    src={getImageUrl(project?.image)}
                     alt={project.projectName}
                     fill
                     className="rounded-t-lg object-cover"

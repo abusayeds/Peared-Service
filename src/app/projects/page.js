@@ -25,6 +25,7 @@ import { FaTimes } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import BottomBar from "../../components/BottomBar/BottomBar";
 import { ErrorSwal, SuccessSwal } from "../../components/utils/allSwalFire";
+import { getImageUrl } from "../../lib/getImageUrl";
 import {
   useAllProjectsQuery,
   useCreateBidProjectMutation,
@@ -301,7 +302,7 @@ export default function Projects() {
                   >
                     <div className="relative w-full h-48 mb-4 rounded-t-lg overflow-hidden">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${project?.image}`}
+                        src={getImageUrl(project?.image)}
                         alt={project.projectName}
                         layout="fill"
                         objectFit="cover"
@@ -446,7 +447,7 @@ export default function Projects() {
                       }`}
                     >
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProject?.image}`}
+                        src={getImageUrl(selectedProject?.image)}
                         alt={selectedProject.projectName}
                         layout="fill"
                         objectFit="cover"

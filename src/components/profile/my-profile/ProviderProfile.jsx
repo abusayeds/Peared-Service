@@ -8,12 +8,12 @@ import { FaPlus, FaTimes } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
 import default_img from "../../../assets/user_img_default.png";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import { useUpdateUserDataMutation } from "../../../redux/features/userApi";
 import ChangePasswordModal from "../../modals/ChangePasswordModal";
 import { ErrorSwal, SuccessSwal } from "../../utils/allSwalFire";
 
 export default function ProviderProfile() {
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
   const { user } = useSelector((state) => state.auth);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -40,35 +40,19 @@ export default function ProviderProfile() {
   useEffect(() => {
     if (user && user.certificate && Array.isArray(user.certificate)) {
       if (user.certificate.length > 0) {
-        setCertificate1Url(
-          user.certificate[0].startsWith("http")
-            ? user.certificate[0]
-            : baseUrl + user.certificate[0]
-        );
+        setCertificate1Url(getImageUrl(user.certificate[0]));
       }
       if (user.certificate.length > 1) {
-        setCertificate2Url(
-          user.certificate[1].startsWith("http")
-            ? user.certificate[1]
-            : baseUrl + user.certificate[1]
-        );
+        setCertificate2Url(getImageUrl(user.certificate[1]));
       }
     }
     if (user && user.oshaCertificat) {
-      setOshaCertUrl(
-        user.oshaCertificat.startsWith("http")
-          ? user.oshaCertificat
-          : baseUrl + user.oshaCertificat
-      );
+      setOshaCertUrl(getImageUrl(user.oshaCertificat));
     }
     if (user && user.backgroundCertificat) {
-      setBackgroundCertUrl(
-        user.backgroundCertificat.startsWith("http")
-          ? user.backgroundCertificat
-          : baseUrl + user.backgroundCertificat
-      );
+      setBackgroundCertUrl(getImageUrl(user.backgroundCertificat));
     }
-  }, [user, baseUrl]);
+  }, [user]);
 
   // Merge file preview logic: if a new file is selected, show it; otherwise, show the user image
   useEffect(() => {
@@ -78,11 +62,11 @@ export default function ProviderProfile() {
       return () => URL.revokeObjectURL(objectUrl);
     } else if (user?.image) {
       // const formatted = user.image.replace(/^public/, "");
-      setPreviewImage(baseUrl + user?.image);
+      setPreviewImage(getImageUrl(user?.image, default_img.src));
     } else {
       setPreviewImage(default_img.src);
     }
-  }, [file, user, baseUrl]);
+  }, [file, user]);
 
   const handleBeforeUpload = (file) => {
     const isImage = file.type.startsWith("image/");
@@ -150,7 +134,7 @@ export default function ProviderProfile() {
     // Ensure preview image is set when opening the modal
     if (user?.image && !file) {
       // const formatted = user.image.replace(/^public/, "");
-      setPreviewImage(baseUrl + user?.image);
+      setPreviewImage(getImageUrl(user?.image, default_img.src));
     }
   };
 

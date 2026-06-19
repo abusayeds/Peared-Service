@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 import main_logo from "../../assets/main_logo.svg";
 
 import default_img from "../../assets/user_img_default.png";
+import { getImageUrl } from "../../lib/getImageUrl";
 import { useDeleteAccountMutation } from "../../redux/features/authApi";
 import { logout } from "../../redux/slices/authSlice";
 
@@ -223,11 +224,7 @@ export default function Navbar() {
                         width={1000}
                         height={1000}
                         className="w-12 h-12 rounded-full border-4 border-primary"
-                        src={
-                          user?.image
-                            ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${user?.image}`
-                            : default_img
-                        }
+                        src={getImageUrl(user?.image, default_img)}
                         alt="profile_image"
                       />
                       <TiArrowSortedDown />
@@ -261,11 +258,7 @@ export default function Navbar() {
                         width={1000}
                         height={1000}
                         className="w-12 h-12 rounded-full border-4 border-primary"
-                        src={
-                          user?.image
-                            ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${user.image}`
-                            : default_img
-                        }
+                        src={getImageUrl(user?.image, default_img)}
                         alt="profile_image"
                       />
                       <TiArrowSortedDown />
@@ -443,11 +436,7 @@ export default function Navbar() {
                           width={1000}
                           height={1000}
                           className="w-16 h-16 rounded-full border-4 border-primary"
-                          src={
-                            user?.image
-                              ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${user.image}`
-                              : default_img
-                          }
+                          src={getImageUrl(user?.image, default_img)}
                           alt="profile_image"
                         />
                         <TiArrowSortedDown />
@@ -493,11 +482,7 @@ export default function Navbar() {
                           width={1000}
                           height={1000}
                           className="w-16 h-16 rounded-full border-4 border-primary"
-                          src={
-                            user?.image
-                              ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${user.image}`
-                              : default_img
-                          }
+                          src={getImageUrl(user?.image, default_img)}
                           alt="profile_image"
                         />
                         <TiArrowSortedDown />

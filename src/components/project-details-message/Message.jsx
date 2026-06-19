@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import default_img from "../../assets/user_img_default.png";
 import { useSocket } from "../../context/SocketContext";
+import { getImageUrl } from "../../lib/getImageUrl";
 
 export default function Message({
   conversationId,
@@ -183,11 +184,10 @@ export default function Message({
               <FaArrowLeft size={20} />
             </button>
             <Image
-              src={
-                providerData?.data?.userImage
-                  ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${providerData?.data?.userImage}`
-                  : default_img.src
-              }
+              src={getImageUrl(
+                providerData?.data?.userImage,
+                default_img.src
+              )}
               alt="Avatar"
               width={1000}
               height={1000}
@@ -225,11 +225,10 @@ export default function Message({
               <FaArrowLeft size={20} />
             </button>
             <Image
-              src={
-                providerData?.data?.currentProjects?.providerId?.image
-                  ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${providerData?.data?.currentProjects?.providerId?.image}`
-                  : default_img.src
-              }
+              src={getImageUrl(
+                providerData?.data?.currentProjects?.providerId?.image,
+                default_img.src
+              )}
               alt="Avatar"
               width={100}
               height={100}
@@ -330,13 +329,11 @@ export default function Message({
 
           const avatarSrc =
             user?.role === "provider"
-              ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${
-                  providerData?.data?.userImage || default_img.src
-                }`
-              : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${
-                  providerData?.data?.currentProjects?.providerId?.image ||
+              ? getImageUrl(providerData?.data?.userImage, default_img.src)
+              : getImageUrl(
+                  providerData?.data?.currentProjects?.providerId?.image,
                   default_img.src
-                }`;
+                );
 
           return (
             <div

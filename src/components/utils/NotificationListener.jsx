@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../../context/SocketContext";
 import { increaseNotification } from "../../redux/slices/authSlice";
+import { getImageUrl } from "../../lib/getImageUrl";
 import { useNotificationPermission } from "./useNotificationPermission";
 
 export default function NotificationListener() {
@@ -18,7 +19,7 @@ export default function NotificationListener() {
         if (Notification.permission === "granted") {
           new Notification(data.title, {
             body: data.message,
-            icon: `${process.env.NEXT_PUBLIC_IMAGE_URL}/${data?.image}`,
+            icon: getImageUrl(data?.image),
           });
         }
       };

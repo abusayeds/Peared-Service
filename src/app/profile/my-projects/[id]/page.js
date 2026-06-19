@@ -19,6 +19,7 @@ import {
   ErrorSwal,
   SuccessSwal,
 } from "../../../../components/utils/allSwalFire";
+import { getImageUrl } from "../../../../lib/getImageUrl";
 import {
   useEditProjectMutation,
   useMySingleProjectByIdQuery,
@@ -335,7 +336,7 @@ export default function EditProject() {
                     <Image
                       width={200}
                       height={200}
-                      src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`}
+                      src={getImageUrl(imageUrl)}
                       alt="Current project"
                       className="mt-2 max-w-full h-auto max-h-40"
                     />

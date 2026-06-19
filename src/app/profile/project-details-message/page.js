@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import Message from "../../../components/project-details-message/Message";
 import { ErrorSwal, SuccessSwal } from "../../../components/utils/allSwalFire";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import {
   useConfirmProjectQuery,
   useProjectDoneByProviderMutation,
@@ -132,7 +133,9 @@ export default function ProjectDetails(props) {
               </div>
               <div className="relative w-[80%] md:w-[50%] h-32 md:h-32 lg:h-32 mb-6">
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${data?.data?.currentProjects?.projectId?.image}`}
+                  src={getImageUrl(
+                    data?.data?.currentProjects?.projectId?.image
+                  )}
                   alt="project_img"
                   layout="fill"
                   objectFit="cover"

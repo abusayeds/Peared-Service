@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { getImageUrl } from "../../../lib/getImageUrl";
 import { usePendingBidsQuery } from "../../../redux/features/projects/projectApi";
 
 export default function MyBids() {
@@ -50,7 +51,7 @@ export default function MyBids() {
                 >
                   <div className="relative w-full h-48 mb-4 rounded-t-lg overflow-hidden">
                     <Image
-                      src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${project?.projectId?.image}`}
+                      src={getImageUrl(project?.projectId?.image)}
                       alt={project.projectId?.projectCategory}
                       fill
                       className="rounded-t-lg object-cover"
