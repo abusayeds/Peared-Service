@@ -102,7 +102,7 @@ export default function Projects() {
   }, []);
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
+    setPage(page);
   };
 
   const handleClickProjectDetails = (project) => {
@@ -243,6 +243,8 @@ export default function Projects() {
     setIsBidModalOpen(false);
   };
 
+  const projects = data?.data?.project ?? [];
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center w-full min-h-screen">
@@ -288,14 +290,14 @@ export default function Projects() {
             {/* <Button onClick={handleClearFilters}>Clear All</Button> */}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {data?.data?.project?.length === 0 ? (
+            {projects.length === 0 ? (
               <p className="text-red-500 min-h-screen text-center text-2xl font-semibold w-full mx-auto">
                 {" "}
                 No project found!
               </p>
             ) : (
               <>
-                {data?.data?.project?.map((project) => (
+                {projects.map((project) => (
                   <div
                     key={project._id}
                     className="bg-secondary p-4 rounded-lg overflow-hidden shadow-md flex flex-col hover:shadow-xl transition-shadow duration-300"

@@ -224,7 +224,7 @@ export default function Navbar() {
                         width={1000}
                         height={1000}
                         className="w-12 h-12 rounded-full border-4 border-primary"
-                        src={getImageUrl(user?.image, default_img)}
+                        src={getImageUrl(user?.image, default_img.src)}
                         alt="profile_image"
                       />
                       <TiArrowSortedDown />
@@ -258,7 +258,7 @@ export default function Navbar() {
                         width={1000}
                         height={1000}
                         className="w-12 h-12 rounded-full border-4 border-primary"
-                        src={getImageUrl(user?.image, default_img)}
+                        src={getImageUrl(user?.image, default_img.src)}
                         alt="profile_image"
                       />
                       <TiArrowSortedDown />
@@ -436,7 +436,7 @@ export default function Navbar() {
                           width={1000}
                           height={1000}
                           className="w-16 h-16 rounded-full border-4 border-primary"
-                          src={getImageUrl(user?.image, default_img)}
+                          src={getImageUrl(user?.image, default_img.src)}
                           alt="profile_image"
                         />
                         <TiArrowSortedDown />
@@ -482,7 +482,7 @@ export default function Navbar() {
                           width={1000}
                           height={1000}
                           className="w-16 h-16 rounded-full border-4 border-primary"
-                          src={getImageUrl(user?.image, default_img)}
+                          src={getImageUrl(user?.image, default_img.src)}
                           alt="profile_image"
                         />
                         <TiArrowSortedDown />
