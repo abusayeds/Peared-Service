@@ -14,6 +14,23 @@ export const projectApi = baseApi.injectEndpoints({
       invalidatesTags: ["projects"],
     }),
 
+    createOffer: builder.mutation({
+      query: (body) => ({
+        url: "/project/create-offer",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["projects", "chat"],
+    }),
+
+    acceptOffer: builder.mutation({
+      query: (bitProjectId) => ({
+        url: `/bit/accept-offer/${bitProjectId}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["projects", "chat"],
+    }),
+
     // edit project for users
     editProject: builder.mutation({
       query: ({ id, data }) => {
@@ -29,14 +46,15 @@ export const projectApi = baseApi.injectEndpoints({
 
     // all projects for providers
     allProjects: builder.query({
-      query: ({ page = 1, limit = 10, searchTerm }) => {
+      query: ({ page = 1, limit = 10, searchTerm, projectCategory }) => {
         return {
           url: "/project/my-all-project",
           method: "GET",
           params: {
             page,
             limit,
-            searchTerm,
+            ...(searchTerm ? { searchTerm } : {}),
+            ...(projectCategory ? { projectCategory } : {}),
           },
         };
       },
@@ -211,6 +229,8 @@ export const projectApi = baseApi.injectEndpoints({
 
 export const {
   useAddProjectMutation,
+  useCreateOfferMutation,
+  useAcceptOfferMutation,
   useEditProjectMutation,
   useAllProjectsQuery,
   useMyProjectsQuery,
