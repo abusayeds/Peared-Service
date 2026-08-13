@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import default_img from "../../assets/user_img_default.png";
 import { useSocket } from "../../context/SocketContext";
 import { getImageUrl } from "../../lib/getImageUrl";
+import { useMarkChatReadMutation } from "../../redux/features/chat/chatApi";
 
 export default function Message({
   conversationId,
@@ -40,6 +41,7 @@ export default function Message({
   const peerTypingClearRef = useRef(null);
   const router = useRouter();
   const socket = useSocket();
+  const [markRead] = useMarkChatReadMutation();
 
   const peerId =
     peerUserId ||
@@ -128,6 +130,9 @@ export default function Message({
         if (prev.some((m) => String(m._id) === String(message._id))) return prev;
         return [...prev, message];
       });
+      if (String(message.senderId) !== String(userId)) {
+        markRead(conversationId);
+      }
       setTimeout(() => {
         containerRef.current?.scrollTo({
           top: containerRef.current.scrollHeight,
@@ -152,7 +157,7 @@ export default function Message({
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("typing", handleTyping);
     };
-  }, [socket, conversationId, userId]);
+  }, [socket, conversationId, userId, markRead]);
 
   useEffect(() => {
     if (page === 1 && containerRef.current && messages.length > 0) {

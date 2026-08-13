@@ -21,7 +21,11 @@ export default function RealtimeSync() {
     if (!socket) return;
 
     const refreshProjects = () => {
-      dispatch(baseApi.util.invalidateTags(["projects", "notifications", "socket"]));
+      dispatch(baseApi.util.invalidateTags(["projects", "notifications", "socket", "chat"]));
+    };
+
+    const onInboxUnread = () => {
+      dispatch(baseApi.util.invalidateTags(["chat"]));
     };
 
     const onNotification = (data) => {
@@ -64,6 +68,7 @@ export default function RealtimeSync() {
     };
 
     socket.on("receiveNotification", onNotification);
+    socket.on("inbox:unread", onInboxUnread);
     socket.on("bid:created", onBidCreated);
     socket.on("bid:approved", onBidApproved);
     socket.on("project:providerDone", onProviderDone);
@@ -72,6 +77,7 @@ export default function RealtimeSync() {
 
     return () => {
       socket.off("receiveNotification", onNotification);
+      socket.off("inbox:unread", onInboxUnread);
       socket.off("bid:created", onBidCreated);
       socket.off("bid:approved", onBidApproved);
       socket.off("project:providerDone", onProviderDone);

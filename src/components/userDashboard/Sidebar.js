@@ -17,7 +17,9 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
+import { useGetUnreadCountQuery } from "../../redux/features/chat/chatApi";
 import { logout } from "../../redux/slices/authSlice";
+import UnreadBadge from "../utils/UnreadBadge";
 
 export default function Sidebar({
   isCollapsed,
@@ -84,6 +86,11 @@ export default function Sidebar({
   ];
 
   const items = user?.role === "provider" ? providerMenu : userMenu;
+  const { data: unreadData } = useGetUnreadCountQuery(undefined, {
+    skip: !user,
+    pollingInterval: 60000,
+  });
+  const inboxUnread = unreadData?.data?.totalUnread || 0;
 
   return (
     <div
@@ -128,6 +135,7 @@ export default function Sidebar({
           {items.map((item, index) => {
             const active =
               pathname === item.path || pathname.startsWith(`${item.path}/`);
+            const isInbox = item.path === "/profile/inbox";
             return (
               <Link
                 href={item.path}
@@ -141,9 +149,17 @@ export default function Sidebar({
                     : "hover:bg-primary/10 text-gray-700"
                 } ${isCollapsed ? "justify-center" : ""}`}
               >
-                <span className="text-base shrink-0">{item.icon}</span>
+                <span className="text-base shrink-0 relative">
+                  {item.icon}
+                  {isInbox && <UnreadBadge count={inboxUnread} />}
+                </span>
                 {!isCollapsed && (
-                  <span className="mx-3 text-sm truncate">{item.name}</span>
+                  <span className="mx-3 text-sm truncate flex-1">{item.name}</span>
+                )}
+                {!isCollapsed && isInbox && inboxUnread > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white">
+                    {inboxUnread > 99 ? "99+" : inboxUnread}
+                  </span>
                 )}
               </Link>
             );

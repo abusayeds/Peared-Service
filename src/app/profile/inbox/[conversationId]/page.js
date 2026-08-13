@@ -1,13 +1,15 @@
 "use client";
 
-import { Button, Form, Input, InputNumber, Modal, Select, Spin, message } from "antd";
+import { Button, Form, Input, InputNumber, Modal, Select, Spin, Tag, message } from "antd";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import Message from "../../../../components/project-details-message/Message";
 import CatalogSelect from "../../../../components/utils/CatalogSelect";
 import {
   useGetConversationMetaQuery,
+  useMarkChatReadMutation,
 } from "../../../../redux/features/chat/chatApi";
 import { useCreateOfferMutation } from "../../../../redux/features/projects/projectApi";
 
@@ -23,9 +25,16 @@ export default function InboxConversationPage() {
     skip: !conversationId,
   });
   const [createOffer, { isLoading: sending }] = useCreateOfferMutation();
+  const [markRead] = useMarkChatReadMutation();
 
   const conversation = data?.data?.conversation;
-  const pendingOffer = data?.data?.pendingOffer;
+  const projects = data?.data?.projects || [];
+  const pendingOffers = data?.data?.pendingOffers || [];
+
+  useEffect(() => {
+    if (!conversationId || !user) return;
+    markRead(conversationId);
+  }, [conversationId, user, markRead]);
 
   const peer = useMemo(() => {
     if (!conversation) return null;
@@ -34,7 +43,6 @@ export default function InboxConversationPage() {
       : conversation.providerId;
   }, [conversation, user?.role]);
 
-  const isDirect = conversation?.type === "direct" && !conversation?.projectId;
   const providerId =
     conversation?.providerId?._id || conversation?.providerId;
 
@@ -44,9 +52,7 @@ export default function InboxConversationPage() {
       userImage: peer?.image,
       currentProjects: {
         providerId: conversation?.providerId,
-        projectId: conversation?.projectId
-          ? { userId: conversation?.userId?._id || conversation?.userId }
-          : null,
+        projectId: null,
       },
     },
   };
@@ -86,50 +92,65 @@ export default function InboxConversationPage() {
     );
   }
 
-  if (conversation.projectId) {
-    const projectId =
-      conversation.projectId?._id || conversation.projectId;
-    router.replace(
-      `/profile/project-details-message?projectId=${projectId}`
-    );
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-[calc(100vh-5rem)] flex flex-col">
-      {user?.role === "user" && isDirect && (
-        <div className="px-3 sm:px-4 py-2 bg-secondary border-b border-hash/30 flex flex-wrap items-center justify-between gap-2">
+      <div className="px-3 sm:px-4 py-2 bg-secondary border-b border-hash/30 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-gray-700">
-            Agree on price in chat, then send a formal offer.
+            {user?.role === "user"
+              ? "Chat here anytime. You can send multiple offers."
+              : "Chat with your client. Accept offers from Pending Bids."}
           </p>
-          <Button
-            type="primary"
-            className="bg-primary"
-            onClick={() => setOfferOpen(true)}
-            disabled={!!pendingOffer}
-          >
-            {pendingOffer ? "Offer pending" : "Send offer"}
-          </Button>
+          {user?.role === "user" && (
+            <Button
+              type="primary"
+              className="bg-primary"
+              onClick={() => setOfferOpen(true)}
+            >
+              Send offer
+            </Button>
+          )}
+          {user?.role === "provider" && pendingOffers.length > 0 && (
+            <Button onClick={() => router.push("/profile/my-bids")}>
+              {pendingOffers.length} pending offer
+              {pendingOffers.length > 1 ? "s" : ""}
+            </Button>
+          )}
         </div>
-      )}
 
-      {user?.role === "provider" && pendingOffer && (
-        <div className="px-3 sm:px-4 py-2 bg-secondary border-b border-hash/30 text-sm text-gray-700">
-          You have a pending offer — accept it from{" "}
-          <button
-            type="button"
-            className="text-primary font-semibold underline"
-            onClick={() => router.push("/profile/my-bids")}
-          >
-            Pending Bids
-          </button>
-          .
-        </div>
-      )}
+        {projects.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-gray-500 mr-1">Projects:</span>
+            {projects.map((p) => (
+              <Link
+                key={p.projectId}
+                href={
+                  p.status === "running" || p.status === "complete"
+                    ? `/profile/project-details-message?projectId=${p.projectId}`
+                    : "/profile/my-bids"
+                }
+                className="inline-flex"
+              >
+                <Tag
+                  color={
+                    p.status === "running"
+                      ? "green"
+                      : p.status === "pending"
+                        ? "orange"
+                        : "default"
+                  }
+                  className="cursor-pointer m-0"
+                >
+                  {p.projectName || p.projectCategory}
+                  {p.status ? ` · ${p.status}` : ""}
+                </Tag>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500">No projects yet — just chatting.</p>
+        )}
+      </div>
 
       <div className="flex-1 min-h-0">
         <Message
