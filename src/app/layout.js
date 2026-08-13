@@ -1,6 +1,7 @@
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { Poppins } from "next/font/google";
 import Navbar from "../components/Navbar/Navbar";
+import RealtimeSync from "../components/utils/RealtimeSync";
 import { SocketProvider } from "../context/SocketContext";
 import ThemeProvider from "../lib/ThemeProvider";
 import "./globals.css";
@@ -21,18 +22,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${poppins.className} antialiased bg-white`}>
-        <SocketProvider>
-          <StoreProvider>
+        <StoreProvider>
+          <SocketProvider>
             <Navbar />
             <AntdRegistry>
               <ThemeProvider>
                 <div className="pt-20">{children}</div>
               </ThemeProvider>
             </AntdRegistry>
-            {/* <Footer /> */}
-            {/* <NotificationListener /> */}
-          </StoreProvider>
-        </SocketProvider>
+            <RealtimeSync />
+          </SocketProvider>
+        </StoreProvider>
       </body>
     </html>
   );
