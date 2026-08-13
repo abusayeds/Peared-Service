@@ -16,10 +16,9 @@ const Login = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
 
-  const redirectPath = searchParams.get("from") || "/";
-
   const [login, { isLoading }] = useLoginMutation();
 
+  // After login as provider, return to projects; otherwise use redirect/from
   const onFinish = async (values) => {
     try {
       const response = await login({
@@ -43,7 +42,18 @@ const Login = () => {
         text: "Welcome to Peared!",
       });
 
-      router.push(redirectPath);
+      const role = response?.data?.user?.role;
+      const preferred =
+        searchParams.get("redirect") || searchParams.get("from");
+      if (preferred) {
+        router.push(preferred);
+      } else if (role === "provider") {
+        router.push("/projects");
+      } else if (role === "user") {
+        router.push("/profile/my-projects");
+      } else {
+        router.push("/");
+      }
     } catch (error) {
       console.log(error);
       ErrorSwal({
