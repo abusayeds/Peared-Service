@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { FaArrowTrendUp } from "react-icons/fa6";
@@ -30,12 +32,30 @@ export default function WantContractor() {
             </Link>
           </p>
           <div className=" mt-4 ">
-            <Link href={`/join-contractor`}>
-              <button className="w-full sm:w-auto text-lg text-white font-semibold px-4 py-2 rounded-lg bg-primary flex justify-center items-center gap-2">
-                Join as Contractor
-                <FaArrowTrendUp />
-              </button>
-            </Link>
+            {!user && (
+              <Link href={`/join-contractor`}>
+                <button className="w-full sm:w-auto text-lg text-white font-semibold px-4 py-2 rounded-lg bg-primary flex justify-center items-center gap-2">
+                  Join as Contractor
+                  <FaArrowTrendUp />
+                </button>
+              </Link>
+            )}
+            {user?.role === "user" && (
+              <Link href="/profile/my-projects">
+                <button className="w-full sm:w-auto text-lg text-white font-semibold px-4 py-2 rounded-lg bg-primary flex justify-center items-center gap-2">
+                  Go to Dashboard
+                  <FaArrowTrendUp />
+                </button>
+              </Link>
+            )}
+            {user?.role === "provider" && (
+              <Link href="/projects">
+                <button className="w-full sm:w-auto text-lg text-white font-semibold px-4 py-2 rounded-lg bg-primary flex justify-center items-center gap-2">
+                  Browse Projects
+                  <FaArrowTrendUp />
+                </button>
+              </Link>
+            )}
           </div>
           {!user && (
             <div className="block md:hidden">

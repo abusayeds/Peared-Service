@@ -27,6 +27,7 @@ import BottomBar from "../../components/BottomBar/BottomBar";
 import { ErrorSwal, SuccessSwal } from "../../components/utils/allSwalFire";
 import { getImageUrl } from "../../lib/getImageUrl";
 import {
+  useAllCategoryQuery,
   useAllProjectsQuery,
   useCreateBidProjectMutation,
 } from "../../redux/features/projects/projectApi";
@@ -71,13 +72,23 @@ export default function Projects() {
 
   const router = useRouter();
 
+  // Clients cannot browse All Projects — send them to their dashboard
+  useEffect(() => {
+    if (user?.role === "user") {
+      router.replace("/profile/my-projects");
+    }
+  }, [user?.role, router]);
+
   const { data, isLoading } = useAllProjectsQuery({
     page,
-    searchTerm: searchText,
+    searchTerm: searchText || undefined,
+    projectCategory: selectedCategory || undefined,
   });
 
+  const { data: categoryData } = useAllCategoryQuery();
+  const categories = categoryData?.data || [];
+
   const [bidProject] = useCreateBidProjectMutation();
-  // console.log(data.data.project);
 
   useEffect(() => {
     if (isModalOpen || isBidModalOpen) {
@@ -117,6 +128,14 @@ export default function Projects() {
   };
 
   const handleOpenBidModal = (project) => {
+    if (!user) {
+      router.push(`/login?redirect=/projects`);
+      return;
+    }
+    if (user.role !== "provider") {
+      router.push("/login");
+      return;
+    }
     setSelectedProject(project);
     setIsBidModalOpen(true);
   };
@@ -149,18 +168,20 @@ export default function Projects() {
   // });
 
   const handleSelectCategory = (value) => {
-    setSelectedCategory(value);
+    setSelectedCategory(value || "");
+    setPage(1);
   };
 
   const handleSearch = (value) => {
-    console.log(value);
-    setSearchText(value);
+    setSearchText(value || "");
+    setPage(1);
   };
 
-  // const handleClearFilters = () => {
-  //   setSelectedCategory("");
-  //   setSearchText("");
-  // };
+  const handleClearFilters = () => {
+    setSelectedCategory("");
+    setSearchText("");
+    setPage(1);
+  };
 
   const handleBeforeUpload = (file) => {
     if (file.type !== "application/pdf") {
@@ -245,6 +266,14 @@ export default function Projects() {
 
   const projects = data?.data?.project ?? [];
 
+  if (user?.role === "user") {
+    return (
+      <div className="flex justify-center items-center w-full min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center w-full min-h-screen">
@@ -255,39 +284,48 @@ export default function Projects() {
 
   return (
     <>
-      <section className=" bg-white">
-        <div className="text-primary text-2xl text-center font-bold mt-2">
-          Projects List
-        </div>
-        <div className="container mx-auto px-4">
-          {/* <div className="mb-8 text-center">
-            <CustomHeading>Projects List </CustomHeading>
-          </div> */}
+      <section className="min-h-screen bg-gradient-to-b from-[#f4f7f0] via-white to-[#eef5e8]">
+        <div className="container mx-auto px-4 pt-6 pb-16">
+          <div className="text-center mb-8">
+            <p className="text-sm uppercase tracking-[0.2em] text-primary">
+              Browse
+            </p>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mt-1">
+              Projects List
+            </h1>
+            <p className="text-slate-500 mt-2 text-sm md:text-base">
+              Filter by category or search to find the right job
+            </p>
+          </div>
 
-          <div className="flex items-center justify-center gap-4 my-8">
-            {/* <Select
-              placeholder="Select Category"
-              style={{ width: 200 }}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 my-8 max-w-3xl mx-auto">
+            <Select
+              placeholder="All categories"
+              className="w-full sm:w-[220px]"
               value={selectedCategory || undefined}
               onChange={handleSelectCategory}
               allowClear
-            >
-              {categories?.map((cat) => (
-                <Option key={cat._id} value={cat.name}>
-                  {cat.name}
-                </Option>
-              ))}
-            </Select> */}
+              size="large"
+              options={categories.map((cat) => ({
+                value: cat.catagory,
+                label: cat.catagory,
+              }))}
+            />
 
             <Search
               placeholder="Search by project name"
               allowClear
+              size="large"
               onSearch={handleSearch}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300 }}
+              className="w-full sm:flex-1"
             />
-            {/* <Button onClick={handleClearFilters}>Clear All</Button> */}
+            {(selectedCategory || searchText) && (
+              <Button size="large" onClick={handleClearFilters}>
+                Clear
+              </Button>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.length === 0 ? (
@@ -349,7 +387,7 @@ export default function Projects() {
                         >
                           Learn More
                         </button>
-                        {user?.role === "provider" && (
+                        {(user?.role === "provider" || !user) && (
                           <button
                             onClick={() => handleOpenBidModal(project)}
                             className="bg-primary/80 text-white px-4 py-2 rounded hover:bg-primary transition-colors duration-300"
