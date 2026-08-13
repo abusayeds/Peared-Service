@@ -12,6 +12,8 @@ import PopularServices from "../components/Home/PopularServices/PopularServices"
 import WantContractor from "../components/Home/WantContractor/WantContractor";
 import WhatPeared from "../components/Home/WhatPeared/WhatPeared";
 import WhyPeared from "../components/Home/WhyPeared/WhyPeared";
+import AllProviders from "../components/Home/AllProviders/AllProviders";
+import HomeProjects from "../components/Home/HomeProjects/HomeProjects";
 
 const MySwal = withReactContent(Swal);
 
@@ -21,24 +23,24 @@ const WorkflowModalContent = () => {
   const textBN = {
     title: "কীভাবে কাজ করবেন?",
     content: `
-      <p><b>১. পোস্ট করা:</b> ইউজার তার কাজের বিবরণ, বাজেট ইত্যাদি দিয়ে জব পোস্ট করবেন।</p>
-      <p><b>২. বিডিং:</b> প্রোভাইডাররা সেই জব পোস্টগুলো দেখবেন এবং নিজেদের অফার বা বিড করবেন।</p>
-      <p><b>৩. নির্বাচন:</b> ইউজার তার জব পোস্টে আসা বিডগুলো থেকে পছন্দমতো একজনকে কাজের জন্য নির্বাচন (Accept) করবেন।</p>
-      <p><b>৪. মেসেজিং:</b> কাজ শুরু হওয়ার পর ইউজার এবং প্রোভাইডার ওয়েবসাইটের ভেতরেই মেসেজের মাধ্যমে কথা বলতে পারবেন।</p>
-      <p><b>৫. ডেলিভারি:</b> প্রোভাইডার কাজ শেষে তা ডেলিভারি দেবেন। ইউজার চাইলে তা গ্রহণ (Accept) অথবা বাতিল (Reject) করতে পারবেন।</p>
-      <p><b>৬. পেমেন্ট:</b> ইউজার কাজ বুঝে নিলে প্রোভাইডার টাকা উইথড্র (Withdraw) করার রিকোয়েস্ট দিতে পারবেন। অ্যাডমিন সেটি অ্যাকসেপ্ট করলে টাকা প্রোভাইডারের ওয়ালেটে চলে যাবে।</p>
+      <p><b>১. প্রোভাইডার খুঁজুন বা জব পোস্ট করুন:</b> ইউজার All Providers থেকে কাউকে মেসেজ করতে পারেন, অথবা পাবলিক প্রজেক্ট পোস্ট করতে পারেন।</p>
+      <p><b>২. আগে কথা বলুন:</b> ইনবক্সে দাম ও কাজ নিয়ে আলোচনা করুন।</p>
+      <p><b>৩. অফার পাঠান:</b> একমত হলে ইউজার অফার পাঠাবেন — সেটি ওই প্রোভাইডারের Pending Bids-এ যাবে।</p>
+      <p><b>৪. একসেপ্ট:</b> প্রোভাইডার অফার একসেপ্ট করলে প্রজেক্ট শুরু হবে এবং একই চ্যাটে কাজ চলবে।</p>
+      <p><b>৫. মার্কেটপ্লেস বিড:</b> পাবলিক জবে প্রোভাইডাররা বিড করতে পারে; ইউজার সেখান থেকেও একজনকে বেছে নিতে পারেন।</p>
+      <p><b>৬. ডেলিভারি ও পেমেন্ট:</b> কাজ শেষে Done → Accept/Reject; পরে ওয়ালেট উইথড্র।</p>
     `,
   };
 
   const textEN = {
     title: "How it works?",
     content: `
-      <p><b>1. Post a Job:</b> Users can post a job with details, budget, etc.</p>
-      <p><b>2. Bidding:</b> Providers can see the job posts and place their bids/offers.</p>
-      <p><b>3. Selection:</b> Users will select (Accept) one of the providers from the submitted bids.</p>
-      <p><b>4. Messaging:</b> After the job starts, the user and provider can communicate via in-app messaging.</p>
-      <p><b>5. Delivery:</b> The provider will deliver the work upon completion. The user can either Accept or Reject it.</p>
-      <p><b>6. Payment:</b> Once the user accepts the delivery, the provider can request a withdrawal. After admin approval, the funds will be added to the provider's wallet.</p>
+      <p><b>1. Find a provider or post a job:</b> Message someone from All Providers, or post a public project.</p>
+      <p><b>2. Chat first:</b> Agree on price and scope in Inbox.</p>
+      <p><b>3. Send an offer:</b> The user sends a formal offer — it appears in that provider’s Pending Bids.</p>
+      <p><b>4. Accept:</b> When the provider accepts, the project starts and chat continues in the same thread.</p>
+      <p><b>5. Marketplace bids:</b> Providers can still bid on public jobs; users can accept a bid as before.</p>
+      <p><b>6. Delivery & payment:</b> Done → Accept/Reject, then wallet withdraw.</p>
     `,
   };
 
@@ -73,6 +75,9 @@ const WorkflowModalContent = () => {
 
 export default function Home() {
   const { user } = useSelector((state) => state.auth);
+  const isProvider = user?.role === "provider";
+  const isUser = user?.role === "user";
+  const isGuest = !user;
 
   useEffect(() => {
     const hasSeenModal = sessionStorage.getItem("hasSeenWorkflowModal");
@@ -92,6 +97,20 @@ export default function Home() {
     <>
       <Banner />
       <PopularServices />
+      {/* Users + guests: providers list */}
+      {(isUser || isGuest) && (
+        <AllProviders
+          title="All Providers"
+          limit={4}
+          showFilters={false}
+          showPagination={false}
+          compact
+        />
+      )}
+      {/* Providers + guests: projects list */}
+      {(isProvider || isGuest) && (
+        <HomeProjects title="All Projects" limit={4} />
+      )}
       <WhatPeared />
       <WhyPeared />
       <Feedback />
