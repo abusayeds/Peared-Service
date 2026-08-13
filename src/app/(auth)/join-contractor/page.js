@@ -16,8 +16,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { ErrorSwal, SuccessSwal } from "../../../components/utils/allSwalFire";
+import CatalogSelect from "../../../components/utils/CatalogSelect";
 import { useJoinAsProviderMutation } from "../../../redux/features/authApi";
-import { useAllCategoryQuery } from "../../../redux/features/projects/projectApi";
 
 const { Text } = Typography;
 
@@ -30,9 +30,6 @@ const JoinAsContractor = () => {
   const [oshaCertificates, setOshaCertificates] = useState([]);
 
   const [joinProvider, { isLoading }] = useJoinAsProviderMutation();
-
-  const { data } = useAllCategoryQuery();
-  const serviceCategories = data?.data || [];
 
   const handleBeforeUpload = (file) => {
     if (file.type !== "application/pdf") {
@@ -72,7 +69,8 @@ const JoinAsContractor = () => {
 
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        formData.append(key, data[key]);
+        const val = data[key];
+        formData.append(key, Array.isArray(val) ? val.join(",") : val);
       }
     }
 
@@ -191,17 +189,28 @@ const JoinAsContractor = () => {
               { required: true, message: "Please select at least one service" },
             ]}
           >
-            <Select
+            <CatalogSelect
+              type="service"
               mode="multiple"
-              placeholder="Select the services you provide"
-              size="large"
-            >
-              {serviceCategories?.map((service) => (
-                <Select.Option key={service._id} value={service.catagory}>
-                  {service.catagory}
-                </Select.Option>
-              ))}
-            </Select>
+              placeholder="Search or add the services you provide"
+              className="w-full"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <span className="text-black font-semibold">
+                Education / Certificates
+              </span>
+            }
+            name="education"
+          >
+            <CatalogSelect
+              type="education"
+              mode="multiple"
+              placeholder="Search or add your education"
+              className="w-full"
+            />
           </Form.Item>
 
           {/* Osha Certificate Upload */}

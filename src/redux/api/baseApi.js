@@ -22,6 +22,9 @@ export const baseApi = createApi({
     "socket",
     "notifications",
     "settings",
+    "catalog",
+    "providers",
+    "chat",
   ],
   endpoints: () => ({}),
 });

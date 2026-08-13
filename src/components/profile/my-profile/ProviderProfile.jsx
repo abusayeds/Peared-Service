@@ -11,6 +11,7 @@ import default_img from "../../../assets/user_img_default.png";
 import { getImageUrl } from "../../../lib/getImageUrl";
 import { useUpdateUserDataMutation } from "../../../redux/features/userApi";
 import ChangePasswordModal from "../../modals/ChangePasswordModal";
+import CatalogSelect from "../../utils/CatalogSelect";
 import { ErrorSwal, SuccessSwal } from "../../utils/allSwalFire";
 
 export default function ProviderProfile() {
@@ -127,6 +128,8 @@ export default function ProviderProfile() {
     form.setFieldsValue({
       name: user?.name || "",
       service: user?.service || [],
+      education: user?.education || [],
+      bio: user?.bio || "",
       address: user?.address || "",
       city: user?.city || "",
       postalCode: user?.postalCode || "",
@@ -218,7 +221,7 @@ export default function ProviderProfile() {
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-black font-semibold">
-                  Service Category
+                  Services
                 </label>
                 <input
                   type="text"
@@ -227,6 +230,23 @@ export default function ProviderProfile() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
                 />
               </div>
+              <div>
+                <label className="block text-black font-semibold">
+                  Education
+                </label>
+                <input
+                  type="text"
+                  value={user?.education?.length ? user.education.join(", ") : ""}
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+              {user?.bio ? (
+                <div>
+                  <label className="block text-black font-semibold">About</label>
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{user.bio}</p>
+                </div>
+              ) : null}
               {/* Certificates Upload */}
               <div className="">
                 {/* Display OSHA and Background Certificates beside each other */}
@@ -412,23 +432,34 @@ export default function ProviderProfile() {
             <Input placeholder="Enter your name" />
           </Form.Item>
 
-          {/* Service Category (Multiple Selection) */}
+          {/* Service Category (search + create) */}
           <Form.Item
-            label="Select Your Service Category"
+            label="Your Services"
             name="service"
             rules={[{ required: true, message: "Please select your service" }]}
           >
-            <Select mode="multiple" placeholder="Choose service categories">
-              <Select.Option value="Residential Cleaning">
-                Residential Cleaning
-              </Select.Option>
-              <Select.Option value="Commercial Cleaning">
-                Commercial Cleaning
-              </Select.Option>
-              <Select.Option value="Painting">Painting</Select.Option>
-              <Select.Option value="Landscaping">Landscaping</Select.Option>
-              <Select.Option value="Carpentry">Carpentry</Select.Option>
-            </Select>
+            <CatalogSelect
+              type="service"
+              mode="multiple"
+              placeholder="Search or add services you offer"
+            />
+          </Form.Item>
+
+          <Form.Item label="Education / Certificates" name="education">
+            <CatalogSelect
+              type="education"
+              mode="multiple"
+              placeholder="Search or add your education"
+            />
+          </Form.Item>
+
+          <Form.Item label="About / Bio" name="bio">
+            <Input.TextArea
+              rows={3}
+              placeholder="Tell clients about your experience…"
+              maxLength={600}
+              showCount
+            />
           </Form.Item>
 
           {/* Certificates Upload */}

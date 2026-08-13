@@ -16,8 +16,10 @@ import { useEffect, useState } from "react";
 import { FaArrowLeft, FaUpload } from "react-icons/fa";
 import Swal from "sweetalert2";
 import payment_img from "../../assets/payment/payment_img.png";
+import CatalogSelect from "../../components/utils/CatalogSelect";
 import { SuccessSwal } from "../../components/utils/allSwalFire";
 import { useAddProjectMutation } from "../../redux/features/projects/projectApi";
+import { useFindOrCreateServiceMutation } from "../../redux/features/catalog/catalogApi";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -387,19 +389,21 @@ const AddProject = () => {
                   <Input placeholder="Describe your project or work" />
                 </Form.Item>
 
-                {/* Category (Readonly, set from searchbar selection) */}
                 <Form.Item
                   label={
                     <span className="text-black font-semibold">
-                      Project Category
+                      Project Category / Service
                     </span>
                   }
                   name="projectCategory"
+                  rules={[
+                    { required: true, message: "Please select a service category" },
+                  ]}
                 >
-                  <Input
-                    // value={selectedCategory}
-                    readOnly
-                    className="bg-gray-100 text-gray-700 font-semibold"
+                  <CatalogSelect
+                    type="service"
+                    mode="single"
+                    placeholder="Search or add a service category"
                   />
                 </Form.Item>
 
