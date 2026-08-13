@@ -19,7 +19,6 @@ import payment_img from "../../assets/payment/payment_img.png";
 import CatalogSelect from "../../components/utils/CatalogSelect";
 import { SuccessSwal } from "../../components/utils/allSwalFire";
 import { useAddProjectMutation } from "../../redux/features/projects/projectApi";
-import { useFindOrCreateServiceMutation } from "../../redux/features/catalog/catalogApi";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -30,17 +29,16 @@ const AddProject = () => {
   const [form] = Form.useForm();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [formData1, setFormData1] = useState(null);
+  const [pendingValues, setPendingValues] = useState(null);
 
   const [addProject, { isLoading }] = useAddProjectMutation();
 
   useEffect(() => {
     const category = localStorage.getItem("selectedCategory");
-    // console.log(category);
     if (category) {
       form.setFields([{ name: "projectCategory", value: category }]);
     }
-  });
+  }, [form]);
 
   // Handle Modal Close
   const handleCancel = () => {
@@ -58,22 +56,44 @@ const AddProject = () => {
     setImage(file);
     return false;
   };
-  // console.log("Outside --------------->><<", formData1);
+
+  const buildProjectFormData = (values) => {
+    const formData = new FormData();
+    Object.keys(values || {}).forEach((key) => {
+      if (key === "image") return;
+      const value = values[key];
+      if (value === undefined || value === null) return;
+      if (typeof value === "boolean") {
+        formData.append(key, value ? "true" : "false");
+        return;
+      }
+      if (Array.isArray(value)) {
+        formData.append(key, value[0] != null ? String(value[0]) : "");
+        return;
+      }
+      formData.append(key, String(value));
+    });
+
+    const fileFromForm =
+      values?.image?.[0]?.originFileObj ||
+      values?.image?.[0] ||
+      null;
+    const file = fileFromForm || image;
+    if (file) {
+      formData.append("image", file);
+    }
+    return formData;
+  };
 
   // Handle form submission
   const onFinish = async (values) => {
-    console.log(values);
-    const formData = new FormData();
-    Object.keys(values).forEach((key) => {
-      if (key !== "image") {
-        formData.append(key, values[key]);
-      }
-    });
-    // Append image file(s) if available
-    if (values.image && values.image.length > 0) {
-      formData.append("image", values.image[0].originFileObj);
+    const fileFromForm =
+      values?.image?.[0]?.originFileObj || values?.image?.[0] || image;
+    if (!fileFromForm) {
+      message.error("Please upload a project image.");
+      return;
     }
-    setFormData1(formData);
+    setPendingValues(values);
     setIsModalVisible(true);
   };
 
@@ -84,20 +104,32 @@ const AddProject = () => {
 
   // Handle image upload
   const handleFileChange = ({ file }) => {
-    if (!file.type.startsWith("image/")) {
+    const raw = file?.originFileObj || file;
+    if (!raw?.type?.startsWith("image/")) {
       message.error("Only image files (JPG, PNG, JPEG) are allowed!");
       return;
     }
 
-    setImage(file);
+    setImage(raw);
   };
 
   const handlePaymentSuccess = async () => {
     try {
-      const response = await addProject(formData1).unwrap();
+      if (!pendingValues) {
+        message.error("Please fill the form again.");
+        return;
+      }
+      const formData = buildProjectFormData(pendingValues);
+      if (![...formData.keys()].includes("image")) {
+        message.error("Please upload a project image.");
+        return;
+      }
 
-      if (response?.statusCode === 200) {
+      const response = await addProject(formData).unwrap();
+
+      if (response?.statusCode === 200 || response?.success) {
         setIsModalVisible(false);
+        setPendingValues(null);
         router.push("/profile/my-projects");
         SuccessSwal({
           title: "",
@@ -105,15 +137,19 @@ const AddProject = () => {
         });
       }
     } catch (error) {
-      const statusCode = error?.data?.statusCode;
-      console.log(statusCode);
+      const statusCode = error?.data?.statusCode || error?.status;
+      const errText =
+        error?.data?.message ||
+        error?.data?.errorSources?.[0]?.message ||
+        error?.message ||
+        "Something went wrong while creating the project.";
+
       if (statusCode === 402 || statusCode === 510) {
         Swal.fire({
-          text:
-            error?.message || error?.data?.message || "something went wrong",
+          text: errText,
           icon: "warning",
           showCancelButton: true,
-          confirmButtonColor: "#3085d6",
+          confirmButtonColor: "#5E9A2D",
           cancelButtonColor: "#d33",
           confirmButtonText: "Go Wallet",
         }).then((result) => {
@@ -121,7 +157,14 @@ const AddProject = () => {
             router.push("/profile/wallet");
           }
         });
+        return;
       }
+
+      Swal.fire({
+        text: errText,
+        icon: "error",
+        confirmButtonColor: "#5E9A2D",
+      });
     }
   };
 
@@ -196,7 +239,7 @@ const AddProject = () => {
                   rules={[
                     { required: true, message: "Please enter the post code." },
                     {
-                      pattern: /^\d{5}(-\d{4})?$/,
+                      pattern: /^\d{5}$/,
                       message: "Please enter a valid 5 digit post code.",
                     },
                   ]}
