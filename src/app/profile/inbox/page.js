@@ -52,7 +52,9 @@ export default function InboxPage() {
               user?.role === "provider" ? c.userId : c.providerId;
             const preview = c.lastMessage?.messageText || "Say hello…";
             const unread = c.unreadCount || 0;
-            const projects = c.projects || [];
+            const projects = (c.projects || []).filter(
+              (p) => p.status !== "finished" && !p.projectComplete
+            );
             return (
               <Link
                 key={c._id}

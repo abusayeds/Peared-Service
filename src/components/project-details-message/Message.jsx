@@ -206,9 +206,9 @@ export default function Message({
     new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[#efeae2]">
+    <div className="flex flex-col h-full min-h-0 bg-secondary">
       {/* Fixed header — user info + report */}
-      <header className="shrink-0 h-[62px] px-3 md:px-4 flex items-center justify-between gap-3 bg-[#f0f2f5] border-b border-[#d1d7db] z-10">
+      <header className="shrink-0 h-[62px] px-3 md:px-4 flex items-center justify-between gap-3 bg-secondary border-b border-hash/30 z-10">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -290,14 +290,6 @@ export default function Message({
         onScroll={handleScroll}
         className="flex-1 min-h-0 overflow-y-auto px-3 md:px-12 py-3 chat-wallpaper"
       >
-        {messages.length === 0 && (
-          <div className="h-full min-h-[200px] flex items-center justify-center">
-            <div className="bg-[#ffeecd]/95 text-[#54656f] text-sm px-4 py-2 rounded-lg shadow-sm max-w-sm text-center">
-              Messages are end-to-end realtime. Say hello to start the chat.
-            </div>
-          </div>
-        )}
-
         {messages.map((msg) => {
           const isOwn = String(msg.senderId) === String(userId);
           return (
@@ -337,7 +329,7 @@ export default function Message({
       </div>
 
       {/* Fixed composer */}
-      <footer className="shrink-0 bg-[#f0f2f5] px-2 md:px-4 py-2.5 border-t border-[#d1d7db]">
+      <footer className="shrink-0 sticky bottom-0 z-20 bg-secondary px-2 md:px-4 py-2.5 border-t border-hash/30">
         <div className="flex items-end gap-2">
           <div className="flex-1 rounded-lg bg-white px-3 py-1.5 shadow-sm">
             <Input.TextArea

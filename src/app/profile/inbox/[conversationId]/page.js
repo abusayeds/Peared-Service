@@ -1,24 +1,37 @@
 "use client";
 
-import { Button, Form, Input, InputNumber, Modal, Select, Spin, Tag, message } from "antd";
-import Link from "next/link";
+import { Button, Form, Input, InputNumber, Modal, Select, Spin, message } from "antd";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { FaInfoCircle } from "react-icons/fa";
 import { useSelector } from "react-redux";
+import InboxProjectPanel from "../../../../components/inbox/InboxProjectPanel";
 import Message from "../../../../components/project-details-message/Message";
 import CatalogSelect from "../../../../components/utils/CatalogSelect";
+import { ErrorSwal, SuccessSwal } from "../../../../components/utils/allSwalFire";
+import { useSocket } from "../../../../context/SocketContext";
 import {
   useGetConversationMetaQuery,
   useMarkChatReadMutation,
 } from "../../../../redux/features/chat/chatApi";
-import { useCreateOfferMutation } from "../../../../redux/features/projects/projectApi";
+import {
+  useCreateOfferMutation,
+  useProjectDoneByProviderMutation,
+  useProjectNotOkByUserMutation,
+  useProjectOkByUserMutation,
+} from "../../../../redux/features/projects/projectApi";
+
+const isActiveProject = (p) =>
+  p?.status === "running" || p?.status === "complete";
 
 export default function InboxConversationPage() {
   const params = useParams();
   const router = useRouter();
+  const socket = useSocket();
   const conversationId = params?.conversationId;
   const { user } = useSelector((state) => state.auth);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
   const [form] = Form.useForm();
 
   const { data, isLoading, refetch } = useGetConversationMetaQuery(conversationId, {
@@ -26,15 +39,37 @@ export default function InboxConversationPage() {
   });
   const [createOffer, { isLoading: sending }] = useCreateOfferMutation();
   const [markRead] = useMarkChatReadMutation();
+  const [projectOk] = useProjectOkByUserMutation();
+  const [projectNotOk] = useProjectNotOkByUserMutation();
+  const [projectDone] = useProjectDoneByProviderMutation();
 
   const conversation = data?.data?.conversation;
   const projects = data?.data?.projects || [];
   const pendingOffers = data?.data?.pendingOffers || [];
+  const activeProjects = useMemo(
+    () => (projects || []).filter(isActiveProject),
+    [projects]
+  );
 
   useEffect(() => {
     if (!conversationId || !user) return;
     markRead(conversationId);
   }, [conversationId, user, markRead]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const refresh = () => refetch();
+    socket.on("project:providerDone", refresh);
+    socket.on("project:userOk", refresh);
+    socket.on("project:userNotOk", refresh);
+    socket.on("bid:approved", refresh);
+    return () => {
+      socket.off("project:providerDone", refresh);
+      socket.off("project:userOk", refresh);
+      socket.off("project:userNotOk", refresh);
+      socket.off("bid:approved", refresh);
+    };
+  }, [socket, refetch]);
 
   const peer = useMemo(() => {
     if (!conversation) return null;
@@ -84,6 +119,49 @@ export default function InboxConversationPage() {
     }
   };
 
+  const handleOk = async (project) => {
+    try {
+      await projectOk(project.bitId).unwrap();
+      SuccessSwal({ title: "", text: "Project completed successfully!" });
+      refetch();
+      router.push(`/feedback?providerId=${providerId}`);
+    } catch (err) {
+      ErrorSwal({
+        title: "",
+        text: err?.data?.message || err?.message || "Failed",
+      });
+    }
+  };
+
+  const handleNotOk = async (project) => {
+    try {
+      const response = await projectNotOk(project.bitId).unwrap();
+      ErrorSwal({
+        title: "",
+        text: response?.message || "Work marked as not complete",
+      });
+      refetch();
+    } catch (err) {
+      ErrorSwal({
+        title: "",
+        text: err?.data?.message || err?.message || "Failed",
+      });
+    }
+  };
+
+  const handleDone = async (project) => {
+    try {
+      await projectDone(project.bitId).unwrap();
+      SuccessSwal({ title: "", text: "Done request sent to client!" });
+      refetch();
+    } catch (err) {
+      ErrorSwal({
+        title: "",
+        text: err?.data?.message || err?.message || "Failed",
+      });
+    }
+  };
+
   if (isLoading || !conversation) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -92,67 +170,22 @@ export default function InboxConversationPage() {
     );
   }
 
+  const panel = (
+    <InboxProjectPanel
+      role={user?.role}
+      activeProjects={activeProjects}
+      pendingCount={pendingOffers.length}
+      onSendOffer={() => setOfferOpen(true)}
+      onOpenBids={() => router.push("/profile/my-bids")}
+      onDone={handleDone}
+      onOk={handleOk}
+      onNotOk={handleNotOk}
+    />
+  );
+
   return (
-    <div className="min-h-[calc(100vh-5rem)] flex flex-col">
-      <div className="px-3 sm:px-4 py-2 bg-secondary border-b border-hash/30 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-gray-700">
-            {user?.role === "user"
-              ? "Chat here anytime. You can send multiple offers."
-              : "Chat with your client. Accept offers from Pending Bids."}
-          </p>
-          {user?.role === "user" && (
-            <Button
-              type="primary"
-              className="bg-primary"
-              onClick={() => setOfferOpen(true)}
-            >
-              Send offer
-            </Button>
-          )}
-          {user?.role === "provider" && pendingOffers.length > 0 && (
-            <Button onClick={() => router.push("/profile/my-bids")}>
-              {pendingOffers.length} pending offer
-              {pendingOffers.length > 1 ? "s" : ""}
-            </Button>
-          )}
-        </div>
-
-        {projects.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-500 mr-1">Projects:</span>
-            {projects.map((p) => (
-              <Link
-                key={p.projectId}
-                href={
-                  p.status === "running" || p.status === "complete"
-                    ? `/profile/project-details-message?projectId=${p.projectId}`
-                    : "/profile/my-bids"
-                }
-                className="inline-flex"
-              >
-                <Tag
-                  color={
-                    p.status === "running"
-                      ? "green"
-                      : p.status === "pending"
-                        ? "orange"
-                        : "default"
-                  }
-                  className="cursor-pointer m-0"
-                >
-                  {p.projectName || p.projectCategory}
-                  {p.status ? ` · ${p.status}` : ""}
-                </Tag>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-gray-500">No projects yet — just chatting.</p>
-        )}
-      </div>
-
-      <div className="flex-1 min-h-0">
+    <div className="h-[calc(100vh-5rem)] pb-16 md:pb-0 flex overflow-hidden bg-secondary">
+      <div className="relative flex-1 min-w-0 min-h-0 flex flex-col">
         <Message
           conversationId={conversationId}
           userId={user?._id}
@@ -162,7 +195,33 @@ export default function InboxConversationPage() {
           isDirect
           hideProjectActions
         />
+        <button
+          type="button"
+          onClick={() => setShowPanel(true)}
+          className="lg:hidden absolute top-[14px] right-3 z-20 h-9 w-9 rounded-full bg-white/90 text-primary shadow flex items-center justify-center"
+          title="Projects"
+        >
+          <FaInfoCircle size={16} />
+        </button>
       </div>
+
+      <div className="hidden lg:flex w-[300px] xl:w-[340px] shrink-0 h-full min-h-0 flex-col">
+        {panel}
+      </div>
+
+      {showPanel && (
+        <div className="lg:hidden fixed inset-0 z-[60] flex justify-end">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45"
+            aria-label="Close"
+            onClick={() => setShowPanel(false)}
+          />
+          <div className="relative w-[min(100%,360px)] h-full shadow-2xl bg-white">
+            {panel}
+          </div>
+        </div>
+      )}
 
       <Modal
         title="Send offer to provider"

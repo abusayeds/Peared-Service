@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
   FaBell,
   FaCheckCircle,
+  FaChevronDown,
+  FaClipboardList,
   FaComments,
+  FaCog,
+  FaFileAlt,
   FaProjectDiagram,
   FaSignOutAlt,
   FaStar,
@@ -31,6 +35,13 @@ export default function Sidebar({
   const { user } = useSelector((state) => state.auth);
   const pathname = usePathname();
   const firstLinkRef = useRef(null);
+  const [openMenus, setOpenMenus] = useState({});
+
+  useEffect(() => {
+    if (pathname.startsWith("/profile/project-manage")) {
+      setOpenMenus((m) => ({ ...m, "Project Manage": true }));
+    }
+  }, [pathname]);
 
   const handleLogout = () => {
     Swal.fire({
@@ -62,6 +73,23 @@ export default function Sidebar({
       path: "/profile/my-projects",
     },
     { name: "Inbox", icon: <FaComments />, path: "/profile/inbox" },
+    {
+      name: "Project Manage",
+      icon: <FaClipboardList />,
+      path: "/profile/project-manage",
+      children: [
+        {
+          name: "Project Report",
+          icon: <FaFileAlt />,
+          path: "/profile/project-manage/reports",
+        },
+        {
+          name: "System Setup",
+          icon: <FaCog />,
+          path: "/profile/project-manage/setup",
+        },
+      ],
+    },
     { name: "Wallet", icon: <FaWallet />, path: "/profile/wallet" },
     { name: "Notifications", icon: <FaBell />, path: "/profile/notifications" },
   ];
@@ -75,6 +103,23 @@ export default function Sidebar({
     },
     { name: "Pending Bids", icon: <FaCheckCircle />, path: "/profile/my-bids" },
     { name: "Inbox", icon: <FaComments />, path: "/profile/inbox" },
+    {
+      name: "Project Manage",
+      icon: <FaClipboardList />,
+      path: "/profile/project-manage",
+      children: [
+        {
+          name: "Project Report",
+          icon: <FaFileAlt />,
+          path: "/profile/project-manage/reports",
+        },
+        {
+          name: "System Setup",
+          icon: <FaCog />,
+          path: "/profile/project-manage/setup",
+        },
+      ],
+    },
     {
       name: "Account Setup",
       icon: <FaStar />,
@@ -132,9 +177,91 @@ export default function Sidebar({
 
         <nav className="mt-3 sm:mt-4 flex-1 overflow-y-auto">
           {items.map((item, index) => {
-            const active =
-              pathname === item.path || pathname.startsWith(`${item.path}/`);
+            const children = item.children || [];
+            const childActive = children.some(
+              (c) =>
+                pathname === c.path || pathname.startsWith(`${c.path}/`)
+            );
+            const parentActive =
+              (pathname === item.path ||
+                pathname.startsWith(`${item.path}/`)) &&
+              !childActive;
             const isInbox = item.path === "/profile/inbox";
+            const menuOpen = !!openMenus[item.name];
+
+            if (children.length && !isCollapsed) {
+              return (
+                <div key={item.name} className="mx-2 mt-1">
+                  <div
+                    className={`flex items-center rounded-lg transition-colors duration-200 ${
+                      parentActive
+                        ? "bg-primary text-white font-semibold shadow-sm"
+                        : "hover:bg-primary/10 text-gray-700"
+                    }`}
+                  >
+                    <Link
+                      href={item.path}
+                      ref={index === 0 ? firstLinkRef : null}
+                      onClick={() => {
+                        setOpenMenus((m) => ({ ...m, [item.name]: true }));
+                        onLinkClick?.();
+                      }}
+                      title={item.name}
+                      className="flex items-center flex-1 min-w-0 px-3 py-2.5"
+                    >
+                      <span className="text-base shrink-0">{item.icon}</span>
+                      <span className="mx-3 text-sm truncate flex-1">
+                        {item.name}
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${menuOpen ? "Collapse" : "Expand"} ${item.name}`}
+                      onClick={() =>
+                        setOpenMenus((m) => ({
+                          ...m,
+                          [item.name]: !m[item.name],
+                        }))
+                      }
+                      className={`shrink-0 p-2 mr-1 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-md ${
+                        parentActive ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      <FaChevronDown
+                        className={`text-xs transition-transform ${
+                          menuOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {menuOpen && (
+                    <div className="mt-1 ml-4 pl-2 border-l border-hash/40 space-y-0.5">
+                      {children.map((child) => {
+                        const active =
+                          pathname === child.path ||
+                          pathname.startsWith(`${child.path}/`);
+                        return (
+                          <Link
+                            href={child.path}
+                            key={child.name}
+                            onClick={onLinkClick}
+                            className={`flex items-center px-3 py-2 rounded-lg text-sm min-h-[40px] ${
+                              active
+                                ? "bg-primary text-white font-semibold"
+                                : "hover:bg-primary/10 text-gray-700"
+                            }`}
+                          >
+                            <span className="text-sm shrink-0">{child.icon}</span>
+                            <span className="ml-2 truncate">{child.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 href={item.path}
@@ -143,7 +270,7 @@ export default function Sidebar({
                 onClick={onLinkClick}
                 title={item.name}
                 className={`flex items-center mx-2 px-3 py-2.5 mt-1 rounded-lg transition-colors duration-200 ${
-                  active
+                  parentActive || (isCollapsed && (parentActive || childActive))
                     ? "bg-primary text-white font-semibold shadow-sm"
                     : "hover:bg-primary/10 text-gray-700"
                 } ${isCollapsed ? "justify-center" : ""}`}

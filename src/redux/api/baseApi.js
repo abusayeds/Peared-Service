@@ -25,6 +25,7 @@ export const baseApi = createApi({
     "catalog",
     "providers",
     "chat",
+    "pm",
   ],
   endpoints: () => ({}),
 });

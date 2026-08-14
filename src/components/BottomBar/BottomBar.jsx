@@ -3,6 +3,7 @@
 import {
   FaBell,
   FaCheckCircle,
+  FaClipboardList,
   FaComments,
   FaProjectDiagram,
   FaUser,
@@ -41,6 +42,11 @@ export default function BottomBar() {
     },
     { name: "Inbox", icon: <FaComments size={22} />, path: "/profile/inbox" },
     {
+      name: "Manage",
+      icon: <FaClipboardList size={22} />,
+      path: "/profile/project-manage",
+    },
+    {
       name: "Alerts",
       icon: <FaBell size={22} />,
       path: "/profile/notifications",
@@ -55,6 +61,11 @@ export default function BottomBar() {
       path: "/profile/my-projects",
     },
     { name: "Inbox", icon: <FaComments size={22} />, path: "/profile/inbox" },
+    {
+      name: "Manage",
+      icon: <FaClipboardList size={22} />,
+      path: "/profile/project-manage",
+    },
     { name: "Wallet", icon: <FaWallet size={22} />, path: "/profile/wallet" },
     { name: "Profile", icon: <FaUser size={22} />, path: "/profile/user" },
   ];
