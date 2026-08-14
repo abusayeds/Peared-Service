@@ -21,7 +21,6 @@ export default function BottomBar() {
   const pathname = usePathname();
   const { data: unreadData } = useGetUnreadCountQuery(undefined, {
     skip: !user,
-    pollingInterval: 60000,
   });
   const inboxUnread = unreadData?.data?.totalUnread || 0;
 

@@ -88,7 +88,6 @@ export default function Sidebar({
   const items = user?.role === "provider" ? providerMenu : userMenu;
   const { data: unreadData } = useGetUnreadCountQuery(undefined, {
     skip: !user,
-    pollingInterval: 60000,
   });
   const inboxUnread = unreadData?.data?.totalUnread || 0;
 
