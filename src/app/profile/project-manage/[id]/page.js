@@ -45,7 +45,8 @@ export default function ProjectManageDetail({ params }) {
   const payload = data?.data;
   const project = payload?.project;
   const summary = payload?.summary || {};
-  const isOwner = payload?.isOwner;
+  const isOwner = payload?.isOwner !== false;
+  const isListingOwner = payload?.isListingOwner;
   const st = statusMeta[project?.status] || statusMeta.ongoing;
 
   const teamPeople = useMemo(() => {
@@ -122,15 +123,13 @@ export default function ProjectManageDetail({ params }) {
           >
             <FaBug />
           </Link>
-          {isOwner && (
-            <Link
-              href="/profile/project-manage/setup"
-              className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center"
-              title="Stages"
-            >
-              <FaCheckCircle />
-            </Link>
-          )}
+          <Link
+            href="/profile/project-manage/setup"
+            className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center"
+            title="Stages"
+          >
+            <FaCheckCircle />
+          </Link>
         </div>
       </div>
 
@@ -208,7 +207,7 @@ export default function ProjectManageDetail({ params }) {
                         <FaFolderOpen className="text-primary" /> Project
                         Description
                       </p>
-                      {isOwner && (
+                      {isListingOwner && (
                         <Link
                           href={`/profile/my-projects/${id}`}
                           className="text-xs text-primary"

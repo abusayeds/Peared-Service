@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSelector } from "react-redux";
 import default_img from "../../../assets/user_img_default.png";
 import { getImageUrl } from "../../../lib/getImageUrl";
+import { formatLastSeen } from "../../../lib/formatPresence";
 import { useGetInboxQuery } from "../../../redux/features/chat/chatApi";
 
 export default function InboxPage() {
@@ -73,6 +74,11 @@ export default function InboxPage() {
                     height={48}
                     className="rounded-full h-12 w-12 object-cover border border-hash/30"
                   />
+                  <span
+                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${
+                      peer?.isActive ? "bg-primary" : "bg-gray-400"
+                    }`}
+                  />
                   {unread > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[1.15rem] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {unread > 99 ? "99+" : unread}
@@ -100,9 +106,17 @@ export default function InboxPage() {
                       </span>
                     )}
                   </div>
+                  <p className="text-[11px] text-hash truncate">
+                    {formatLastSeen(
+                      peer?.lastSeen || peer?.updatedAt,
+                      Boolean(peer?.isActive)
+                    )}
+                  </p>
                   <p
                     className={`text-sm truncate ${
                       unread ? "text-gray-800 font-medium" : "text-gray-500"
+                    } ${
+                      c.lastMessage?.callStatus === "missed" ? "text-red-600" : ""
                     }`}
                   >
                     {preview}

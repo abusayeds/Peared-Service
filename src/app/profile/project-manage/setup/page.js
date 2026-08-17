@@ -15,10 +15,7 @@ import {
 
 export default function ProjectManageSetup() {
   const { user } = useSelector((s) => s.auth);
-  const { data, isLoading } = useGetPmStagesQuery(
-    {},
-    { skip: user?.role === "provider" }
-  );
+  const { data, isLoading } = useGetPmStagesQuery({}, { skip: !user });
   const [createStage, { isLoading: creating }] = useCreatePmStageMutation();
   const [updateStage] = useUpdatePmStageMutation();
   const [deleteStage] = useDeletePmStageMutation();
@@ -26,19 +23,6 @@ export default function ProjectManageSetup() {
   const stages = data?.data || [];
   const taskStages = stages.filter((s) => s.type === "task");
   const bugStages = stages.filter((s) => s.type === "bug");
-
-  if (user?.role === "provider") {
-    return (
-      <div className="p-6 text-gray-500">
-        Stage setup is available for project owners.
-        <div className="mt-3">
-          <Link href="/profile/project-manage" className="text-primary">
-            Back to projects
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const onDelete = (stage) => {
     Swal.fire({
@@ -63,8 +47,9 @@ export default function ProjectManageSetup() {
       </Link>
       <h1 className="text-2xl font-bold mb-1">System Setup</h1>
       <p className="text-sm text-gray-500 mb-5 max-w-2xl">
-        Add custom task and bug stages with color codes. These columns are used
-        when you manage a posted project.
+        These stages are yours only. Add names and colors you want — for example
+        Error, Fix:error, Dev:error. The other person on the same project cannot
+        see or change this.
       </p>
       {isLoading ? (
         <div className="flex justify-center py-16">

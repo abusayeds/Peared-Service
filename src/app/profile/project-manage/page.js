@@ -146,8 +146,8 @@ export default function ProjectManagePage() {
             Manage Projects
           </h1>
           <p className="text-sm text-gray-500 mt-1 max-w-xl">
-            Add an in-progress project to track its status, tasks, and bugs.
-            Deadline and budget come from the listing.
+            Private notes for your running work. Tasks, bugs, and stages stay on
+            your account — the other person does not see them.
           </p>
           <div className="flex flex-wrap gap-4 mt-3 text-sm">
             <Link

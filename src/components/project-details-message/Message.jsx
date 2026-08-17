@@ -1,16 +1,23 @@
 "use client";
 
 import { SendOutlined } from "@ant-design/icons";
-import { Button, Input } from "antd";
+import { Button, Input, Modal, message as toast } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FaArrowLeft, FaFlag } from "react-icons/fa";
+import { FaArrowLeft, FaBan, FaFlag, FaPhone, FaPhoneSlash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import default_img from "../../assets/user_img_default.png";
+import { useCall } from "../../context/CallContext";
 import { useSocket } from "../../context/SocketContext";
+import { callEventLabel, formatLastSeen } from "../../lib/formatPresence";
 import { getImageUrl } from "../../lib/getImageUrl";
-import { useMarkChatReadMutation } from "../../redux/features/chat/chatApi";
+import {
+  useBlockChatUserMutation,
+  useGetConversationMetaQuery,
+  useMarkChatReadMutation,
+  useUnblockChatUserMutation,
+} from "../../redux/features/chat/chatApi";
 
 export default function Message({
   conversationId,
@@ -35,22 +42,42 @@ export default function Message({
   const [pagination, setPagination] = useState(null);
   const [loadedPages, setLoadedPages] = useState(new Set());
   const [isActive, setIsActive] = useState(false);
+  const [lastSeen, setLastSeen] = useState(null);
   const [isPeerTyping, setIsPeerTyping] = useState(false);
+  const [seenTick, setSeenTick] = useState(0);
   const containerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const peerTypingClearRef = useRef(null);
   const router = useRouter();
   const socket = useSocket();
+  const callApi = useCall();
   const [markRead] = useMarkChatReadMutation();
+  const [blockUser, { isLoading: blocking }] = useBlockChatUserMutation();
+  const [unblockUser, { isLoading: unblocking }] = useUnblockChatUserMutation();
+  const { data: metaWrap } = useGetConversationMetaQuery(conversationId, {
+    skip: !conversationId,
+  });
+  const meta = metaWrap?.data;
+
+  const peerFromMeta =
+    user?.role === "provider"
+      ? meta?.conversation?.userId
+      : meta?.conversation?.providerId;
 
   const peerId =
     peerUserId ||
+    peerFromMeta?._id ||
     (user?.role === "provider"
       ? data?.data?.currentProjects?.projectId?.userId
       : providerId);
 
+  const blockedByMe = Boolean(meta?.blockedByMe);
+  const blockedByPeer = Boolean(meta?.blockedByPeer);
+  const isBlocked = blockedByMe || blockedByPeer;
+
   const headerName =
     providerData?.data?.userName ||
+    peerFromMeta?.name ||
     (user?.role === "provider"
       ? providerData?.data?.userName
       : providerData?.data?.currentProjects?.providerId?.name);
@@ -59,12 +86,14 @@ export default function Message({
     user?.role === "provider"
       ? getImageUrl(
           providerData?.data?.userImage ||
+            peerFromMeta?.image ||
             providerData?.data?.currentProjects?.providerId?.image,
           default_img.src
         )
       : getImageUrl(
           providerData?.data?.currentProjects?.providerId?.image ||
-            providerData?.data?.userImage,
+            providerData?.data?.userImage ||
+            peerFromMeta?.image,
           default_img.src
         );
 
@@ -74,16 +103,37 @@ export default function Message({
     status === "finished" || data?.data?.currentProjects?.projectId?.isComplete;
 
   useEffect(() => {
+    if (!peerFromMeta) return;
+    setIsActive(Boolean(peerFromMeta.isActive));
+    setLastSeen(peerFromMeta.lastSeen || peerFromMeta.updatedAt || null);
+  }, [peerFromMeta]);
+
+  useEffect(() => {
+    if (isActive) return;
+    const id = setInterval(() => setSeenTick((n) => n + 1), 60000);
+    return () => clearInterval(id);
+  }, [isActive]);
+
+  useEffect(() => {
     if (!socket) return;
     const onPresence = (payload) => {
       if (!payload) return;
       const id = payload?._id || payload?.userId;
       if (peerId && String(id) === String(peerId)) {
         setIsActive(Boolean(payload.isActive));
+        if (payload.lastSeen) setLastSeen(payload.lastSeen);
+        else if (!payload.isActive) setLastSeen(new Date().toISOString());
       }
     };
+    const onMessageError = (payload) => {
+      toast.error(payload?.message || "Could not send message");
+    };
     socket.on("active-inactive", onPresence);
-    return () => socket.off("active-inactive", onPresence);
+    socket.on("message:error", onMessageError);
+    return () => {
+      socket.off("active-inactive", onPresence);
+      socket.off("message:error", onMessageError);
+    };
   }, [socket, peerId]);
 
   useEffect(() => {
@@ -175,7 +225,7 @@ export default function Message({
   );
 
   const emitTyping = (isTyping) => {
-    if (!socket?.connected || !conversationId) return;
+    if (!socket?.connected || !conversationId || isBlocked) return;
     socket.emit("typing", {
       conversationId,
       userId,
@@ -192,7 +242,7 @@ export default function Message({
   };
 
   const handleSend = () => {
-    if (!newMessage.trim() || !socket?.connected) return;
+    if (!newMessage.trim() || !socket?.connected || isBlocked) return;
     socket.emit("sendMessage", {
       conversationId,
       senderId: userId,
@@ -205,9 +255,44 @@ export default function Message({
   const formatTime = (timestamp) =>
     new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+  const presenceLabel = isPeerTyping
+    ? "typing…"
+    : formatLastSeen(lastSeen, isActive);
+
+  const confirmBlock = () => {
+    if (!peerId) return;
+    Modal.confirm({
+      title: `Block ${headerName || "this user"}?`,
+      content: "They will not be able to call or message you.",
+      okText: "Block",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await blockUser(peerId).unwrap();
+          toast.success("User blocked");
+        } catch (err) {
+          toast.error(err?.data?.message || "Could not block");
+        }
+      },
+    });
+  };
+
+  const handleUnblock = async () => {
+    if (!peerId) return;
+    try {
+      await unblockUser(peerId).unwrap();
+      toast.success("User unblocked");
+    } catch (err) {
+      toast.error(err?.data?.message || "Could not unblock");
+    }
+  };
+
+  void seenTick;
+  void isDirect;
+
   return (
     <div className="flex flex-col h-full min-h-0 bg-secondary">
-      {/* Fixed header — user info + report */}
       <header className="shrink-0 h-[62px] px-3 md:px-4 flex items-center justify-between gap-3 bg-secondary border-b border-hash/30 z-10">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -236,13 +321,53 @@ export default function Message({
             <h2 className="text-[16px] font-medium text-[#111b21] truncate leading-tight">
               {headerName || "User"}
             </h2>
-            <p className="text-[12.5px] text-[#667781] truncate">
-              {isPeerTyping ? "typing…" : isActive ? "online" : "offline"}
-            </p>
+            <p className="text-[12.5px] text-[#667781] truncate">{presenceLabel}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {conversationId && peerId && !isBlocked && (
+            <button
+              type="button"
+              onClick={() =>
+                callApi?.startCall?.({
+                  conversationId,
+                  peerId,
+                  peerName: headerName,
+                  peerAvatar: headerAvatar,
+                })
+              }
+              disabled={callApi?.call?.status && callApi.call.status !== "idle"}
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40"
+              aria-label="Audio call"
+              title="Audio call"
+            >
+              <FaPhone size={14} />
+            </button>
+          )}
+          {peerId && (
+            blockedByMe ? (
+              <button
+                type="button"
+                onClick={handleUnblock}
+                disabled={unblocking}
+                className="inline-flex items-center gap-1 text-xs font-medium px-3 py-2 rounded-lg border border-hash/50 text-gray-700 bg-white min-h-[40px]"
+              >
+                Unblock
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={confirmBlock}
+                disabled={blocking}
+                className="w-10 h-10 rounded-full text-red-600 bg-white border border-red-200 flex items-center justify-center"
+                aria-label="Block"
+                title="Block"
+              >
+                <FaBan size={14} />
+              </button>
+            )
+          )}
           {!hideProjectActions && user?.role === "user" && canReview && !isFinished && (
             <>
               <button
@@ -284,13 +409,30 @@ export default function Message({
         </div>
       </header>
 
-      {/* Scrollable messages only */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
         className="flex-1 min-h-0 overflow-y-auto px-3 md:px-12 py-3 chat-wallpaper"
       >
         {messages.map((msg) => {
+          if (msg.type === "call") {
+            const missed = msg.callStatus === "missed" || msg.callStatus === "rejected";
+            return (
+              <div key={msg._id} className="mb-2 flex justify-center">
+                <div
+                  className={`inline-flex items-center gap-2 text-[12px] px-3 py-1.5 rounded-full border shadow-sm ${
+                    missed
+                      ? "border-red-200 bg-red-50 text-red-600"
+                      : "border-hash/40 bg-white text-gray-700"
+                  }`}
+                >
+                  {missed ? <FaPhoneSlash size={11} /> : <FaPhone size={11} className="text-primary" />}
+                  <span>{callEventLabel(msg)}</span>
+                  <span className="text-gray-400">{formatTime(msg.createdAt)}</span>
+                </div>
+              </div>
+            );
+          }
           const isOwn = String(msg.senderId) === String(userId);
           return (
             <div
@@ -315,7 +457,7 @@ export default function Message({
           );
         })}
 
-        {isPeerTyping && (
+        {isPeerTyping && !isBlocked && (
           <div className="flex justify-start mb-1">
             <div className="bg-white rounded-xl px-3 py-2 shadow-sm">
               <span className="typing-dots text-[#54656f]">
@@ -328,35 +470,54 @@ export default function Message({
         )}
       </div>
 
-      {/* Fixed composer */}
       <footer className="shrink-0 sticky bottom-0 z-20 bg-secondary px-2 md:px-4 py-2.5 border-t border-hash/30">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 rounded-lg bg-white px-3 py-1.5 shadow-sm">
-            <Input.TextArea
-              autoSize={{ minRows: 1, maxRows: 5 }}
-              placeholder="Type a message"
-              value={newMessage}
-              onChange={handleInputChange}
-              onPressEnter={(e) => {
-                if (!e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              className="!border-0 !shadow-none !resize-none !p-0 text-[15px]"
+        {isBlocked ? (
+          <div className="text-center py-2 px-3">
+            <p className="text-sm text-gray-700">
+              {blockedByMe
+                ? "You blocked this user. They cannot call or message you."
+                : "You can't call or message this user."}
+            </p>
+            {blockedByMe && (
+              <button
+                type="button"
+                onClick={handleUnblock}
+                disabled={unblocking}
+                className="mt-2 text-primary font-semibold text-sm min-h-[40px]"
+              >
+                Unblock
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-end gap-2">
+            <div className="flex-1 rounded-lg bg-white px-3 py-1.5 shadow-sm">
+              <Input.TextArea
+                autoSize={{ minRows: 1, maxRows: 5 }}
+                placeholder="Type a message"
+                value={newMessage}
+                onChange={handleInputChange}
+                onPressEnter={(e) => {
+                  if (!e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                className="!border-0 !shadow-none !resize-none !p-0 text-[15px]"
+              />
+            </div>
+            <Button
+              type="primary"
+              shape="circle"
+              size="large"
+              className="!bg-primary hover:!bg-[#4d7f24] !border-0 !w-11 !h-11 !min-w-11 flex items-center justify-center"
+              icon={<SendOutlined />}
+              onClick={handleSend}
+              disabled={!newMessage.trim() || !socket?.connected}
             />
           </div>
-          <Button
-            type="primary"
-            shape="circle"
-            size="large"
-            className="!bg-primary hover:!bg-[#4d7f24] !border-0 !w-11 !h-11 !min-w-11 flex items-center justify-center"
-            icon={<SendOutlined />}
-            onClick={handleSend}
-            disabled={!newMessage.trim() || !socket?.connected}
-          />
-        </div>
-        {!socket?.connected && (
+        )}
+        {!socket?.connected && !isBlocked && (
           <p className="text-[11px] text-amber-600 mt-1 px-1">Connecting…</p>
         )}
       </footer>

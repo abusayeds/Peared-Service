@@ -53,8 +53,8 @@ export default function CreateManageModal({
       destroyOnClose
     >
       <p className="text-sm text-gray-500 mb-3">
-        Select an in-progress project. Deadline, budget, and people come from
-        that listing.
+        Select a running project. Deadline and budget come from that listing.
+        Tasks, bugs, and stages stay on your account only.
       </p>
       {isLoading ? (
         <div className="flex justify-center py-8">

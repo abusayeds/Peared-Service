@@ -38,6 +38,20 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["chat"],
     }),
+    blockChatUser: builder.mutation({
+      query: (userId) => ({
+        url: `/chat/block/${userId}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["chat"],
+    }),
+    unblockChatUser: builder.mutation({
+      query: (userId) => ({
+        url: `/chat/block/${userId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["chat"],
+    }),
   }),
 });
 
@@ -47,4 +61,6 @@ export const {
   useStartDirectChatMutation,
   useGetConversationMetaQuery,
   useMarkChatReadMutation,
+  useBlockChatUserMutation,
+  useUnblockChatUserMutation,
 } = chatApi;
